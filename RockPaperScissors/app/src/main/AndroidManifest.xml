@@ -19,6 +19,8 @@
     </application>
 
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
 
 
