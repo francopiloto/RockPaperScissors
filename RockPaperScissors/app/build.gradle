@@ -27,9 +27,13 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation "com.google.firebase:firebase-core:16.0.1"
     implementation 'com.google.firebase:firebase-database:16.0.1'
 
     implementation 'com.android.support:multidex:1.0.3'
+    // location play services
+    implementation 'com.google.android.gms:play-services-location:15.0.1'
+
+    // dexter runtime permissions
+    implementation 'com.karumi:dexter:5.0.0'
 }
 apply plugin: 'com.google.gms.google-services'
