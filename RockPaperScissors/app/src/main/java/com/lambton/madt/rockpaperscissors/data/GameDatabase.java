@@ -1,4 +1,4 @@
-package com.lambton.madt.rockpaperscissors;
+package com.lambton.madt.rockpaperscissors.data;
 
 /**
  * Contains all Firebase related functions

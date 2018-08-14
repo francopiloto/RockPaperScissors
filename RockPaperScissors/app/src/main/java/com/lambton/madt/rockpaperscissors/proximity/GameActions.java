@@ -1,4 +1,4 @@
-package com.lambton.madt.rockpaperscissors;
+package com.lambton.madt.rockpaperscissors.proximity;
 
 import android.app.Activity;
 import android.content.Context;

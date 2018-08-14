@@ -6,19 +6,30 @@ package com.lambton.madt.rockpaperscissors.models;
 
 public class User {
 
-    String name;
+	String userId;
+	String status;
 
-    public User() {
+	public User() {
+	}
 
-    }
+	public User(String userId, String status) {
+		this.userId = userId;
+		this.status = status;
+	}
 
-    public User(String n) {
-        this.name = n;
+	public String getUserId() {
+		return userId;
+	}
 
-    }
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
 
-    public String getName() {
-        return this.name;
-    }
+	public String getStatus() {
+		return status;
+	}
 
+	public void setStatus(String status) {
+		this.status = status;
+	}
 }
