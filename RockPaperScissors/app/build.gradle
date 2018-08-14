@@ -34,6 +34,7 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     // location play services
     implementation 'com.google.android.gms:play-services-location:15.0.1'
+    implementation 'com.google.android.gms:play-services-maps:15.0.0'
 
     // dexter runtime permissions
 //    implementation 'com.karumi:dexter:5.0.0'
