@@ -17,6 +17,9 @@ public interface IConstants {
 		String STATUS = "status";
 		String LATITUDE = "latitude";
 		String LONGITUDE = "longitude";
+
+		String GAMES = "games";
+		String GAME_ID = "gameId";
 	}
 
 	interface Status {

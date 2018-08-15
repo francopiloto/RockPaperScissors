@@ -2,6 +2,7 @@ package com.lambton.madt.rockpaperscissors.activities;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -10,8 +11,10 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -27,12 +30,13 @@ import com.google.firebase.database.ValueEventListener;
 import com.lambton.madt.rockpaperscissors.R;
 import com.lambton.madt.rockpaperscissors.models.User;
 import com.lambton.madt.rockpaperscissors.proximity.TrackingService;
+import com.lambton.madt.rockpaperscissors.utils.IAppConfig;
 import com.lambton.madt.rockpaperscissors.utils.IConstants;
+import com.lambton.madt.rockpaperscissors.utils.Utils;
 
 import java.util.ArrayList;
 
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 import timber.log.Timber;
 
 public class MapActivity extends BaseActivity implements OnMapReadyCallback,
@@ -155,12 +159,53 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Timber.d("Selected Item: " + item.getTitle());
 		switch (item.getItemId()) {
+			case R.id.item_start:
+				startGame();
+				return true;
+			case R.id.item_join:
+				joinGame();
+				return true;
 			case R.id.item_logout:
 				logout();
 				return true;
 
 			default:
 				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	private void startGame() {
+		if (userArrayList.size() >= 2) {
+			String gameId = Utils.randomString(IAppConfig.GAME_ID_LENGTH);
+			if (!Utils.isNullOrEmpty(gameId)) {
+				checkAndCreateGame(101, gameId);
+			}
+		} else {
+			Toast.makeText(MapActivity.this, "2 or more players required to play the game", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void joinGame() {
+		if (userArrayList.size() >= 2) {
+			final EditText taskEditText = new EditText(this);
+			AlertDialog dialog = new AlertDialog.Builder(this)
+					.setTitle("Join the game")
+					.setMessage("Enter valid game id")
+					.setView(taskEditText)
+					.setPositiveButton("Join", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							String gameId = String.valueOf(taskEditText.getText());
+							if (!Utils.isNullOrEmpty(gameId)) {
+								checkAndCreateGame(102, gameId);
+							}
+						}
+					})
+					.setNegativeButton("Cancel", null)
+					.create();
+			dialog.show();
+		} else {
+			Toast.makeText(MapActivity.this, "2 or more players required to play the game", Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -189,11 +234,6 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 				});
 	}
 
-	@OnClick(R.id.btn_game_play)
-	public void onClickGamePlay() {
-		GamePlayActivity.startGamePlayActivity(MapActivity.this);
-	}
-
 	private void onLineUserListener() {
 		fbReference.child(IConstants.Firebase.USERS)
 				.orderByChild(IConstants.Firebase.STATUS)
@@ -215,7 +255,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 								double distance = location.distanceTo(otherUserPoint);
 								Timber.d("user.getUserId() = " + user.getUserId() + ", distance = " + distance);
 								// Add user who are in 50 meters area
-								if (distance < 50) {
+								if (distance < 500) {
 									userArrayList.add(user);
 								}
 							}
@@ -257,5 +297,36 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 					}
 				});
+	}
+
+	private void checkAndCreateGame(final int type, final String gameId) {
+		if (type == 101) {
+			fbReference.child(IConstants.Firebase.GAMES)
+					.push()
+					.child(IConstants.Firebase.GAME_ID)
+					.setValue(gameId);
+			GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId);
+		} else if (type == 102) {
+			fbReference.child(IConstants.Firebase.GAMES)
+					.orderByChild(IConstants.Firebase.GAME_ID)
+					.equalTo(gameId)
+					.addListenerForSingleValueEvent(new ValueEventListener() {
+						@Override
+						public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+							Timber.d("dataSnapshot = " + dataSnapshot.getValue());
+							if (dataSnapshot.exists()) {
+								GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId);
+							} else {
+								Toast.makeText(MapActivity.this, "Invalid game id", Toast.LENGTH_SHORT).show();
+							}
+						}
+
+						@Override
+						public void onCancelled(@NonNull DatabaseError databaseError) {
+							Toast.makeText(MapActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+						}
+					});
+		}
+
 	}
 }
