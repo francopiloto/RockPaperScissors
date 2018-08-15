@@ -13,6 +13,10 @@ public interface IConstants {
 
 	interface Firebase {
 		String USERS = "users";
+		String USER_ID = "userId";
+		String STATUS = "status";
+		String LATITUDE = "latitude";
+		String LONGITUDE = "longitude";
 	}
 
 	interface Status {

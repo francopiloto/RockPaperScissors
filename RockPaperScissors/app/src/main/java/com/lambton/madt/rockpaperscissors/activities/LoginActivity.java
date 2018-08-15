@@ -4,11 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -50,16 +48,15 @@ public class LoginActivity extends BaseActivity {
 
 	private void checkOnServer(final String userId) {
 		fbReference.child(IConstants.Firebase.USERS)
-				.orderByChild("userId")
+				.orderByChild(IConstants.Firebase.USER_ID)
 				.equalTo(userId)
 				.addListenerForSingleValueEvent(new ValueEventListener() {
 					@Override
 					public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 						Timber.d("dataSnapshot = " + dataSnapshot.getValue());
 						if (dataSnapshot.exists()) {
-							User user = dataSnapshot.getValue(User.class);
-							if (user != null && userId.equals(user.getUserId())) {
-								Timber.d("user.getUserId() = " + user.getUserId());
+							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+								snapshot.getRef().child(IConstants.Firebase.STATUS).setValue(IConstants.Status.ONLINE);
 							}
 						} else {
 							fbReference.child(IConstants.Firebase.USERS)
@@ -73,7 +70,7 @@ public class LoginActivity extends BaseActivity {
 
 					@Override
 					public void onCancelled(@NonNull DatabaseError databaseError) {
-						Timber.d("dataSnapshot = " + databaseError.getMessage());
+						Toast.makeText(LoginActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
 					}
 				});
 	}

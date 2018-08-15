@@ -34,7 +34,7 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     // location play services
     implementation 'com.google.android.gms:play-services-location:15.0.1'
-    implementation 'com.google.android.gms:play-services-maps:15.0.0'
+    implementation 'com.google.android.gms:play-services-maps:15.0.1'
 
     // dexter runtime permissions
 //    implementation 'com.karumi:dexter:5.0.0'
@@ -44,5 +44,9 @@ dependencies {
 
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+
+    // To check if app is foreground or background
+    implementation "android.arch.lifecycle:extensions:1.1.1"
+    annotationProcessor "android.arch.lifecycle:compiler:1.1.1"
 }
 apply plugin: 'com.google.gms.google-services'
