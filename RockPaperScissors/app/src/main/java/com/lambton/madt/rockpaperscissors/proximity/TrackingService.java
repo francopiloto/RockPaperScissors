@@ -13,7 +13,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
-public class TrackingService {
+// please do not change the formatting in this class
+public class TrackingService
+{
+    private static final int REFRESH_INTERVAL_MS = 5000;
+
 	private Activity activity;
 	private TrackingListener listener;
 
@@ -21,21 +25,24 @@ public class TrackingService {
 	private LocationCallback locationCallback;
 	private LocationRequest request;
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	public interface TrackingListener {
 		void locationChanged(Location location);
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
-	public TrackingService(Activity activity, TrackingListener listener) {
+	public TrackingService(Activity activity, TrackingListener listener)
+    {
 		this.activity = activity;
 		this.listener = listener;
 
-		locationCallback = new LocationCallback() {
+		locationCallback = new LocationCallback()
+        {
 			@Override
-			public void onLocationResult(LocationResult locationResult) {
+			public void onLocationResult(LocationResult locationResult)
+            {
 				Location location = locationResult.getLastLocation();
 
 				if (location != null) {
@@ -47,15 +54,14 @@ public class TrackingService {
 		client = LocationServices.getFusedLocationProviderClient(activity);
 
 		request = new LocationRequest();
-		request.setInterval(10000);
+		request.setInterval(REFRESH_INTERVAL_MS);
 		request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
-	public void start() {
-		Log.d("LOCATION", "start");
-
+	public void start()
+    {
 		int permission = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION);
 
 		if (permission == PackageManager.PERMISSION_GRANTED) {
@@ -63,24 +69,21 @@ public class TrackingService {
 		}
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	public void stop() {
-		Log.d("LOCATION", "stop");
 		client.removeLocationUpdates(locationCallback);
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
-	private void updateLocation(Location location) {
-		// TODO update firebase here
-		Log.d("LOCATION", location.getLatitude() + ":" + location.getLongitude());
-
+	private void updateLocation(Location location)
+    {
 		if (listener != null) {
 			listener.locationChanged(location);
 		}
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 }

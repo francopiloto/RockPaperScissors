@@ -51,10 +51,11 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 	private ArrayList<User> userArrayList;
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState)
+	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map);
 		ButterKnife.bind(this);
@@ -68,6 +69,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 		trackingService = new TrackingService(this, this);
 
 		LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+
 		if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			finish();
 		}
@@ -77,7 +79,9 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 		if (permission == PackageManager.PERMISSION_GRANTED) {
 			trackingService.start();
-		} else {
+		}
+		else
+		{
 			ActivityCompat.requestPermissions(this,
 					new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
 					PERMISSIONS_REQUEST);
@@ -86,18 +90,20 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 		onLineUserListener();
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	protected void onDestroy() {
+	protected void onDestroy()
+    {
 		trackingService.stop();
 		super.onDestroy();
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void onMapReady(GoogleMap googleMap) {
+	public void onMapReady(GoogleMap googleMap)
+    {
 		map = googleMap;
 
 		if (location != null) {
@@ -105,23 +111,28 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 		}
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+    {
 		if (requestCode == PERMISSIONS_REQUEST && grantResults.length == 1
-				&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				&& grantResults[0] == PackageManager.PERMISSION_GRANTED)
+		{
 			trackingService.start();
-		} else {
+		}
+		else
+		    {
 			Toast.makeText(this, "Please enable location services to allow GPS tracking",
 					Toast.LENGTH_SHORT).show();
 		}
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void locationChanged(Location location) {
+	public void locationChanged(Location location)
+    {
 		this.location = location;
 
 		if (map == null) {
@@ -132,7 +143,9 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 		if (playerMarker != null) {
 			playerMarker.setPosition(latLong);
-		} else {
+		}
+		else
+		{
 			playerMarker = map.addMarker(new MarkerOptions()
 					.title(mPreferenceHelper.getString(IConstants.Preference.USER_ID))
 					.position(latLong));
@@ -142,7 +155,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 		updateLocationOnFb(latLong);
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	public static void startMapActivity(Context context) {
 		Intent intent = new Intent(context, MapActivity.class);

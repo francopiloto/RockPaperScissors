@@ -4,7 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.view.View;
+import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,6 +14,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.lambton.madt.rockpaperscissors.R;
 import com.lambton.madt.rockpaperscissors.models.Result;
+import com.lambton.madt.rockpaperscissors.proximity.GameActions;
 import com.lambton.madt.rockpaperscissors.proximity.ShakeDetector;
 import com.lambton.madt.rockpaperscissors.utils.IConstants;
 import com.lambton.madt.rockpaperscissors.utils.Utils;
@@ -27,6 +29,10 @@ public class GamePlayActivity extends BaseActivity {
 	private static final String GAME_ID = "GAME_ID";
 	@BindView(R.id.txtGameId)
 	TextView txtGameId;
+
+    @BindView(R.id.imageView)
+    ImageView image;
+
 	private ShakeDetector shakeDetector;
 	private String gameId;
 	private ArrayList<Result> resultArrayList;
@@ -52,11 +58,19 @@ public class GamePlayActivity extends BaseActivity {
 		}
 		resultArrayList = new ArrayList<>();
 		txtGameId.setText("Game Id : " + gameId);
+
+        clearUI();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 		shakeDetector = new ShakeDetector(this, new ShakeDetector.ShakeListener() {
 			@Override
 			public void onShake(int count) {
 				Timber.d("shake: " + count);
-				if (count >= 3) {
+
+                clearUI();
+                GameActions.shakeVibration(GamePlayActivity.this);
+
+				if (count == 3) {
 					submitUserOption(Utils.randomRPS());
 				}
 			}
@@ -82,15 +96,23 @@ public class GamePlayActivity extends BaseActivity {
 
 	/* --------------------------------------------------------------------------------------------- */
 
-	public void onClick(View view) {
-//		GameActions.vibrate(this);
-		submitUserOption(Utils.randomRPS());
-	}
+	private void clearUI()
+    {
+        image.setBackgroundResource(R.drawable.none);
+        image.setImageResource(R.drawable.none);
+    }
 
-	/* --------------------------------------------------------------------------------------------- */
 
 	// Option - R, P or S
 	private void submitUserOption(final String option) {
+
+	    switch(option)
+        {
+            case "R": image.setImageResource(R.drawable.rock); break;
+            case "P": image.setImageResource(R.drawable.paper); break;
+            case "S": image.setImageResource(R.drawable.scissors); break;
+        }
+
 		fbReference.child(IConstants.Firebase.GAMES)
 				.orderByChild(IConstants.Firebase.GAME_ID)
 				.equalTo(gameId)
@@ -122,6 +144,7 @@ public class GamePlayActivity extends BaseActivity {
 					@Override
 					public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 						resultArrayList.clear();
+
 						Timber.d("game = " + dataSnapshot.getValue());
 						for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 							for (DataSnapshot gameSnapshot : snapshot.getChildren()) {

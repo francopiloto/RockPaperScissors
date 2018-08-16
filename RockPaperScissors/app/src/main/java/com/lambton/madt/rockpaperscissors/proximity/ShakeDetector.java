@@ -6,11 +6,16 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
-public class ShakeDetector implements SensorEventListener {
+import timber.log.Timber;
+
+// please do not change the formatting in this class
+public class ShakeDetector implements SensorEventListener
+{
 	private static final float SHAKE_THRESHOLD_GRAVITY = 2.0f;
 	private static final int SHAKE_SLOP_TIME_MS = 300;
-	private static final int SHAKE_COUNT_RESET_TIME_MS = 1000;
+	private static final int SHAKE_COUNT_RESET_TIME_MS = 600;
 
 	private long shakeTimestamp;
 	private int shakeCount;
@@ -19,39 +24,43 @@ public class ShakeDetector implements SensorEventListener {
 	private SensorManager sensorManager;
 	private Sensor accelerometer;
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	public interface ShakeListener {
 		void onShake(int count);
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
-	public ShakeDetector(Activity activity, ShakeListener listener) {
+	public ShakeDetector(Activity activity, ShakeListener listener)
+    {
 		sensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
 		accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
 		this.listener = listener;
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(boolean enabled)
+    {
 		if (accelerometer == null) {
 			return;
 		}
 
 		if (enabled) {
 			sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
-		} else {
+		}
+		else {
 			sensorManager.unregisterListener(this);
 		}
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void onSensorChanged(SensorEvent event) {
+	public void onSensorChanged(SensorEvent event)
+	{
 		if (listener == null) {
 			return;
 		}
@@ -88,12 +97,11 @@ public class ShakeDetector implements SensorEventListener {
 		listener.onShake(shakeCount);
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void onAccuracyChanged(Sensor sensor, int i) {
-	}
+	public void onAccuracyChanged(Sensor sensor, int i) {}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 }
