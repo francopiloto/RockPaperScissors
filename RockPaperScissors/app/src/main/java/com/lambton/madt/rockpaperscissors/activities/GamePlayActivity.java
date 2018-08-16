@@ -57,7 +57,7 @@ public class GamePlayActivity extends BaseActivity {
 			public void onShake(int count) {
 				Timber.d("shake: " + count);
 				if (count >= 3) {
-//					submitUserOption(Utils.randomRPS());
+					submitUserOption(Utils.randomRPS());
 				}
 			}
 		});
