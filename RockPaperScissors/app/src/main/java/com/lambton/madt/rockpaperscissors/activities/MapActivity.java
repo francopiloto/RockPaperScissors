@@ -30,6 +30,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.lambton.madt.rockpaperscissors.R;
 import com.lambton.madt.rockpaperscissors.models.User;
+import com.lambton.madt.rockpaperscissors.proximity.GameActions;
 import com.lambton.madt.rockpaperscissors.proximity.TrackingService;
 import com.lambton.madt.rockpaperscissors.utils.IAppConfig;
 import com.lambton.madt.rockpaperscissors.utils.IConstants;
@@ -189,7 +190,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 	}
 
 	private void startGame() {
-		if (userArrayList.size() >= 2) {
+		if (userArrayList.size() >= GameActions.MINIMUM_PLAYERS) {
 			String gameId = Utils.randomString(IAppConfig.GAME_ID_LENGTH);
 			if (!Utils.isNullOrEmpty(gameId)) {
 				checkAndCreateGame(101, gameId);

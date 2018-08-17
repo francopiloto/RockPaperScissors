@@ -22,6 +22,7 @@ import com.lambton.madt.rockpaperscissors.utils.IConstants;
 import com.lambton.madt.rockpaperscissors.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,16 +41,6 @@ public class GamePlayActivity extends BaseActivity {
     private ArrayList<Result> resultArrayList;
 	private int numUsers;
 	private String gameKey;
-
-    private static final int[][][] m =
-    {
-        {{ 0, 0},{-1, 1},{ 1,-1},{ 1,-1},{-1, 1}},
-        {{ 1,-1},{ 0, 0},{-1, 1},{-1, 1},{ 1,-1}},
-        {{-1, 1},{ 1,-1},{ 0, 0},{ 1,-1},{-1, 1}},
-        {{-1, 1},{ 1,-1},{-1, 1},{ 0, 0},{ 1,-1}},
-        {{ 1,-1},{-1, 1},{ 1,-1},{-1, 1},{ 0, 0}}
-    };
-
 
 	public static void startGamePlayActivity(Context context, String gameId, int numUsers, String gameKey) {
 		if (!Utils.isNullOrEmpty(gameId)) {
@@ -219,40 +210,30 @@ public class GamePlayActivity extends BaseActivity {
 
     private void showResults()
     {
-        String RPSLV = "RPSLV";
         String userName = mPreferenceHelper.getString(IConstants.Preference.USER_ID);
-        Result current = null;
-
-        if (resultArrayList.size() == 2)
-        {
-            Result r1 = resultArrayList.get(0);
-            Result r2 = resultArrayList.get(1);
-
-            int idx1 = RPSLV.indexOf(r1.getOption().charAt(0));
-            int idx2 = RPSLV.indexOf(r2.getOption().charAt(0));
-
-            r1.setResult(m[idx1][idx2][0]);
-            r2.setResult(m[idx1][idx2][1]);
-
-            current = r1.getUserId().equals(userName) ? r1 : r2;
-        }
-        else {
-            // I don't know how to compute
-        }
-
-        if (current.getResult() < 0) {
-            image.setBackgroundResource(R.drawable.lose);
-        }
-        else if (current.getResult() == 0) {
-            image.setBackgroundResource(R.drawable.tie);
-        }
-        else {
-            image.setBackgroundResource(R.drawable.win);
-        }
-
+        List<Result> winners = GameActions.computeResult(resultArrayList);
         resultArrayList.clear();
+
+        for (Result r : winners)
+        {
+            if (r.userId.equals(userName))
+            {
+                if (winners.size() == 1) {
+                    image.setBackgroundResource(R.drawable.win);
+                }
+                else {
+                    image.setBackgroundResource(R.drawable.tie);
+                }
+
+                return;
+            }
+        }
+
+        image.setBackgroundResource(R.drawable.lose);
     }
 
 /* --------------------------------------------------------------------------------------------- */
+
+
 
 }

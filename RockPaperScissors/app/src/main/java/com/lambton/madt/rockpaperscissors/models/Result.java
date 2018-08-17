@@ -1,39 +1,33 @@
 package com.lambton.madt.rockpaperscissors.models;
 
-public class Result {
-	String userId;
-	String option;
-	private int result;
+import android.util.Log;
 
-	public Result() {
-	}
+public class Result
+{
+	public final String userId;
+	public final int option;
 
-	public Result(String userId, String option) {
+	private int scores;
+
+	private static final String symbols = "RPSLV";
+
+	public Result(String userId, String option)
+    {
 		this.userId = userId;
-		this.option = option;
+		this.option = symbols.indexOf(option.charAt(0));
+
+		Log.d("RPS", "" + this.option);
 	}
 
-	public String getUserId() {
-		return userId;
-	}
+    public void addScores(int scores) {
+		this.scores += scores;
+    }
 
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
+    public int getScores() {
+		return scores;
+    }
 
-	public String getOption() {
-		return option;
-	}
-
-	public void setOption(String option) {
-		this.option = option;
-	}
-
-	public void setResult(int result) {
-		this.result = result;
-	}
-
-	public int getResult() {
-		return result;
+    public void clear() {
+		scores = 0;
 	}
 }
