@@ -4,11 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -35,13 +37,28 @@ public class GamePlayActivity extends BaseActivity {
 
 	private ShakeDetector shakeDetector;
 	private String gameId;
-	private ArrayList<Result> resultArrayList;
+    private ArrayList<Result> resultArrayList;
+	private int numUsers;
+	private String gameKey;
+
+    private static final int[][][] m =
+    {
+        {{ 0, 0},{-1, 1},{ 1,-1},{ 1,-1},{-1, 1}},
+        {{ 1,-1},{ 0, 0},{-1, 1},{-1, 1},{ 1,-1}},
+        {{-1, 1},{ 1,-1},{ 0, 0},{ 1,-1},{-1, 1}},
+        {{-1, 1},{ 1,-1},{-1, 1},{ 0, 0},{ 1,-1}},
+        {{ 1,-1},{-1, 1},{ 1,-1},{-1, 1},{ 0, 0}}
+    };
 
 
-	public static void startGamePlayActivity(Context context, String gameId) {
+	public static void startGamePlayActivity(Context context, String gameId, int numUsers, String gameKey) {
 		if (!Utils.isNullOrEmpty(gameId)) {
 			Intent intent = new Intent(context, GamePlayActivity.class);
 			intent.putExtra(GAME_ID, gameId);
+
+			intent.putExtra("NumUsers", numUsers);
+            intent.putExtra("GameKey", gameKey);
+
 			context.startActivity(intent);
 		}
 	}
@@ -52,11 +69,16 @@ public class GamePlayActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_game_play);
 		ButterKnife.bind(this);
+
 		gameId = getIntent().getStringExtra(GAME_ID);
+		numUsers = getIntent().getIntExtra("NumUsers", 0);
+        gameKey = getIntent().getStringExtra("GameKey");
+
 		if (Utils.isNullOrEmpty(gameId)) {
 			finish();
 		}
-		resultArrayList = new ArrayList<>();
+
+        resultArrayList = new ArrayList<>();
 		txtGameId.setText("Game Id : " + gameId);
 
         clearUI();
@@ -94,13 +116,15 @@ public class GamePlayActivity extends BaseActivity {
 		super.onPause();
 	}
 
-	/* --------------------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
 
 	private void clearUI()
     {
         image.setBackgroundResource(R.drawable.none);
         image.setImageResource(R.drawable.none);
     }
+
+/* --------------------------------------------------------------------------------------------- */
 
 
 	// Option - R, P or S
@@ -124,7 +148,7 @@ public class GamePlayActivity extends BaseActivity {
 							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 								snapshot.getRef()
 										.child(mPreferenceHelper.getString(IConstants.Preference.USER_ID))
-										.setValue(option);
+										.setValue(option + System.currentTimeMillis());
 							}
 						}
 					}
@@ -136,8 +160,8 @@ public class GamePlayActivity extends BaseActivity {
 				});
 	}
 
-	private void gamePlayListener() {
-		fbReference.child(IConstants.Firebase.GAMES)
+    private void gamePlayListener() {
+        /*fbReference.child(IConstants.Firebase.GAMES)
 				.orderByChild(IConstants.Firebase.GAME_ID)
 				.equalTo(gameId)
 				.addValueEventListener(new ValueEventListener() {
@@ -165,5 +189,70 @@ public class GamePlayActivity extends BaseActivity {
 
 					}
 				});
-	}
+                */
+
+        fbReference.child(IConstants.Firebase.GAMES).child(gameKey).addChildEventListener(new ChildEventListener()
+        {
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                onChildChanged(dataSnapshot,s);
+            }
+
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s)
+            {
+                if (!dataSnapshot.getKey().equals(IConstants.Firebase.GAME_ID))
+                {
+                    resultArrayList.add(new Result(dataSnapshot.getKey(), dataSnapshot.getValue().toString()));
+
+                    if (resultArrayList.size() >= numUsers) {
+                        showResults();
+                    }
+                }
+            }
+
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+    }
+
+/* --------------------------------------------------------------------------------------------- */
+
+    private void showResults()
+    {
+        String RPSLV = "RPSLV";
+        String userName = mPreferenceHelper.getString(IConstants.Preference.USER_ID);
+        Result current = null;
+
+        if (resultArrayList.size() == 2)
+        {
+            Result r1 = resultArrayList.get(0);
+            Result r2 = resultArrayList.get(1);
+
+            int idx1 = RPSLV.indexOf(r1.getOption().charAt(0));
+            int idx2 = RPSLV.indexOf(r2.getOption().charAt(0));
+
+            r1.setResult(m[idx1][idx2][0]);
+            r2.setResult(m[idx1][idx2][1]);
+
+            current = r1.getUserId().equals(userName) ? r1 : r2;
+        }
+        else {
+            // I don't know how to compute
+        }
+
+        if (current.getResult() < 0) {
+            image.setBackgroundResource(R.drawable.lose);
+        }
+        else if (current.getResult() == 0) {
+            image.setBackgroundResource(R.drawable.tie);
+        }
+        else {
+            image.setBackgroundResource(R.drawable.win);
+        }
+
+        resultArrayList.clear();
+    }
+
+/* --------------------------------------------------------------------------------------------- */
+
 }

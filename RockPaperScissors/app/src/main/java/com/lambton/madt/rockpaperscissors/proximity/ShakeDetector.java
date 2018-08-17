@@ -6,9 +6,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
-
-import timber.log.Timber;
 
 // please do not change the formatting in this class
 public class ShakeDetector implements SensorEventListener
@@ -65,17 +62,13 @@ public class ShakeDetector implements SensorEventListener
 			return;
 		}
 
-		float x = event.values[0];
-		float y = event.values[1];
-		float z = event.values[2];
+		float x = event.values[0] / SensorManager.GRAVITY_EARTH;
+		float y = event.values[1] / SensorManager.GRAVITY_EARTH;
+		float z = event.values[2] / SensorManager.GRAVITY_EARTH;
 
-		float gX = x / SensorManager.GRAVITY_EARTH;
-		float gY = y / SensorManager.GRAVITY_EARTH;
-		float gZ = z / SensorManager.GRAVITY_EARTH;
+		float force = (float) Math.sqrt(x*x + y*y + z*z);
 
-		float gForce = (float) Math.sqrt(gX * gX + gY * gY + gZ * gZ);
-
-		if (gForce < SHAKE_THRESHOLD_GRAVITY) {
+		if (force < SHAKE_THRESHOLD_GRAVITY) {
 			return;
 		}
 

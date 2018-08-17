@@ -26,6 +26,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.lambton.madt.rockpaperscissors.R;
 import com.lambton.madt.rockpaperscissors.models.User;
@@ -314,11 +315,9 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 	private void checkAndCreateGame(final int type, final String gameId) {
 		if (type == 101) {
-			fbReference.child(IConstants.Firebase.GAMES)
-					.push()
-					.child(IConstants.Firebase.GAME_ID)
-					.setValue(gameId);
-			GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId);
+			DatabaseReference ref = fbReference.child(IConstants.Firebase.GAMES).push();
+			ref.child(IConstants.Firebase.GAME_ID).setValue(gameId);
+			GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId, userArrayList.size(), ref.getKey());
 		} else if (type == 102) {
 			fbReference.child(IConstants.Firebase.GAMES)
 					.orderByChild(IConstants.Firebase.GAME_ID)
@@ -328,7 +327,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 						public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 							Timber.d("dataSnapshot = " + dataSnapshot.getValue());
 							if (dataSnapshot.exists()) {
-								GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId);
+								GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId, userArrayList.size(), dataSnapshot.getKey());
 							} else {
 								Toast.makeText(MapActivity.this, "Invalid game id", Toast.LENGTH_SHORT).show();
 							}
