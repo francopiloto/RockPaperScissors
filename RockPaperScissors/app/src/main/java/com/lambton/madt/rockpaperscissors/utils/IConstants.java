@@ -20,6 +20,7 @@ public interface IConstants {
 
 		String GAMES = "games";
 		String GAME_ID = "gameId";
+		String BOARD_USER_COUNT = "boardUserCount";
 	}
 
 	interface Status {

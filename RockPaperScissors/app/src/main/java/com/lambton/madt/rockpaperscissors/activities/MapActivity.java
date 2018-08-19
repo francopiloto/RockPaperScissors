@@ -12,6 +12,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.text.InputType;
+import android.text.method.DigitsKeyListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -30,7 +32,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.lambton.madt.rockpaperscissors.R;
 import com.lambton.madt.rockpaperscissors.models.User;
-import com.lambton.madt.rockpaperscissors.proximity.GameActions;
 import com.lambton.madt.rockpaperscissors.proximity.TrackingService;
 import com.lambton.madt.rockpaperscissors.utils.IAppConfig;
 import com.lambton.madt.rockpaperscissors.utils.IConstants;
@@ -53,14 +54,16 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 	private ArrayList<User> userArrayList;
 
-/* --------------------------------------------------------------------------------------------- */
+	/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState)
-	{
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map);
 		ButterKnife.bind(this);
+
+
+		setTitle(mPreferenceHelper.getString(IConstants.Preference.USER_ID));
 
 		userArrayList = new ArrayList<>();
 
@@ -81,60 +84,54 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 		if (permission == PackageManager.PERMISSION_GRANTED) {
 			trackingService.start();
-		}
-		else
-		{
+		} else {
 			ActivityCompat.requestPermissions(this,
 					new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
 					PERMISSIONS_REQUEST);
 		}
 
-		onLineUserListener();
+//		onLineUserListener();
 	}
 
-/* --------------------------------------------------------------------------------------------- */
+	/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	protected void onDestroy()
-    {
+	protected void onDestroy() {
 		trackingService.stop();
 		super.onDestroy();
 	}
 
-/* --------------------------------------------------------------------------------------------- */
+	/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void onMapReady(GoogleMap googleMap)
-    {
+	public void onMapReady(GoogleMap googleMap) {
 		map = googleMap;
+		if (map != null) {
+			onLineUserListener();
+		}
 
 		if (location != null) {
 			locationChanged(location);
 		}
 	}
 
-/* --------------------------------------------------------------------------------------------- */
+	/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
-    {
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		if (requestCode == PERMISSIONS_REQUEST && grantResults.length == 1
-				&& grantResults[0] == PackageManager.PERMISSION_GRANTED)
-		{
+				&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 			trackingService.start();
-		}
-		else
-		    {
+		} else {
 			Toast.makeText(this, "Please enable location services to allow GPS tracking",
 					Toast.LENGTH_SHORT).show();
 		}
 	}
 
-/* --------------------------------------------------------------------------------------------- */
+	/* --------------------------------------------------------------------------------------------- */
 
 	@Override
-	public void locationChanged(Location location)
-    {
+	public void locationChanged(Location location) {
 		this.location = location;
 
 		if (map == null) {
@@ -145,9 +142,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 		if (playerMarker != null) {
 			playerMarker.setPosition(latLong);
-		}
-		else
-		{
+		} else {
 			playerMarker = map.addMarker(new MarkerOptions()
 					.title(mPreferenceHelper.getString(IConstants.Preference.USER_ID))
 					.position(latLong));
@@ -157,7 +152,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 		updateLocationOnFb(latLong);
 	}
 
-/* --------------------------------------------------------------------------------------------- */
+	/* --------------------------------------------------------------------------------------------- */
 
 	public static void startMapActivity(Context context) {
 		Intent intent = new Intent(context, MapActivity.class);
@@ -190,18 +185,41 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 	}
 
 	private void startGame() {
-		if (userArrayList.size() >= GameActions.MINIMUM_PLAYERS) {
-			String gameId = Utils.randomString(IAppConfig.GAME_ID_LENGTH);
-			if (!Utils.isNullOrEmpty(gameId)) {
-				checkAndCreateGame(101, gameId);
-			}
+		if (userArrayList.size() >= IAppConfig.MINIMUM_PLAYERS) {
+			final EditText taskEditText = new EditText(this);
+			taskEditText.setKeyListener(DigitsKeyListener.getInstance("0123456789"));
+			taskEditText.setInputType(InputType.TYPE_CLASS_NUMBER);
+			AlertDialog dialog = new AlertDialog.Builder(this)
+					.setTitle("Create board :")
+					.setMessage("Enter number of players(at least 2)")
+					.setView(taskEditText)
+					.setPositiveButton("Join", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							int boardUserCount = Integer.valueOf(taskEditText.getText().toString());
+							if (boardUserCount < 2) {
+								Toast.makeText(MapActivity.this, "2 or more players required to play the game", Toast.LENGTH_SHORT).show();
+							} else if (boardUserCount > userArrayList.size()) {
+								Toast.makeText(MapActivity.this, "Board users count must be less then total number of online user", Toast.LENGTH_LONG).show();
+							} else {
+								String gameId = Utils.randomString(IAppConfig.GAME_ID_LENGTH);
+								if (!Utils.isNullOrEmpty(gameId)) {
+									createGame(gameId, boardUserCount);
+								}
+							}
+						}
+					})
+					.setNegativeButton("Cancel", null)
+					.create();
+			dialog.show();
+
 		} else {
 			Toast.makeText(MapActivity.this, "2 or more players required to play the game", Toast.LENGTH_SHORT).show();
 		}
 	}
 
 	private void joinGame() {
-		if (userArrayList.size() >= 2) {
+		if (userArrayList.size() >= IAppConfig.MINIMUM_PLAYERS) {
 			final EditText taskEditText = new EditText(this);
 			AlertDialog dialog = new AlertDialog.Builder(this)
 					.setTitle("Join the game")
@@ -212,7 +230,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 						public void onClick(DialogInterface dialog, int which) {
 							String gameId = String.valueOf(taskEditText.getText());
 							if (!Utils.isNullOrEmpty(gameId)) {
-								checkAndCreateGame(102, gameId);
+								checkAndJoinGame(gameId);
 							}
 						}
 					})
@@ -235,11 +253,10 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 								snapshot.getRef().child("status").setValue(IConstants.Status.OFFLINE);
 							}
-
-							mPreferenceHelper.clearAll();
-							LoginActivity.startLoginActivity(MapActivity.this);
-							finish();
 						}
+						mPreferenceHelper.clearAll();
+						LoginActivity.startLoginActivity(MapActivity.this);
+						finish();
 					}
 
 					@Override
@@ -257,7 +274,9 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 					@Override
 					public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 						userArrayList.clear();
-						map.clear();
+						if (map != null) {
+							map.clear();
+						}
 						Timber.d("online users = " + dataSnapshot.getValue());
 						for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 //							snapshot.getRef().child("status").setValue(IConstants.Status.OFFLINE);
@@ -269,8 +288,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 								otherUserPoint.setLongitude(user.getLongitude());
 								double distance = location.distanceTo(otherUserPoint);
 								Timber.d("user.getUserId() = " + user.getUserId() + ", distance = " + distance);
-								// Add user who are in 50 meters area
-								if (distance < 500) {
+								if (distance < IAppConfig.RANGE) {
 									userArrayList.add(user);
 								}
 							}
@@ -279,9 +297,11 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 
 						for (User user : userArrayList) {
 							LatLng latLong = new LatLng(user.getLatitude(), user.getLongitude());
-							map.addMarker(new MarkerOptions()
-									.title(user.getUserId())
-									.position(latLong));
+							if (map != null) {
+								map.addMarker(new MarkerOptions()
+										.title(user.getUserId())
+										.position(latLong));
+							}
 						}
 					}
 
@@ -293,6 +313,7 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 	}
 
 	private void updateLocationOnFb(final LatLng latLong) {
+		Timber.i("updateLocationOnFb");
 		fbReference.child(IConstants.Firebase.USERS)
 				.orderByChild(IConstants.Firebase.USER_ID)
 				.equalTo(mPreferenceHelper.getString(IConstants.Preference.USER_ID))
@@ -314,32 +335,40 @@ public class MapActivity extends BaseActivity implements OnMapReadyCallback,
 				});
 	}
 
-	private void checkAndCreateGame(final int type, final String gameId) {
-		if (type == 101) {
-			DatabaseReference ref = fbReference.child(IConstants.Firebase.GAMES).push();
-			ref.child(IConstants.Firebase.GAME_ID).setValue(gameId);
-			GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId, userArrayList.size(), ref.getKey());
-		} else if (type == 102) {
-			fbReference.child(IConstants.Firebase.GAMES)
-					.orderByChild(IConstants.Firebase.GAME_ID)
-					.equalTo(gameId)
-					.addListenerForSingleValueEvent(new ValueEventListener() {
-						@Override
-						public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-							Timber.d("dataSnapshot = " + dataSnapshot.getValue());
-							if (dataSnapshot.exists()) {
-								GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId, userArrayList.size(), dataSnapshot.getKey());
-							} else {
-								Toast.makeText(MapActivity.this, "Invalid game id", Toast.LENGTH_SHORT).show();
+	private void createGame(final String gameId, final int boardUserCount) {
+		DatabaseReference ref = fbReference.child(IConstants.Firebase.GAMES).push();
+		ref.child(IConstants.Firebase.GAME_ID).setValue(gameId);
+		ref.child(IConstants.Firebase.BOARD_USER_COUNT).setValue(boardUserCount);
+		GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId, boardUserCount, ref.getKey());
+	}
+
+	private void checkAndJoinGame(final String gameId) {
+		fbReference.child(IConstants.Firebase.GAMES)
+				.orderByChild(IConstants.Firebase.GAME_ID)
+				.equalTo(gameId)
+				.addListenerForSingleValueEvent(new ValueEventListener() {
+					@Override
+					public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+						Timber.d("dataSnapshot = " + dataSnapshot.getValue());
+						if (dataSnapshot.exists()) {
+							boolean isFirstTime = true;
+							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+								if (isFirstTime) {
+									isFirstTime = false;
+									int boardUserCount = snapshot.child(IConstants.Firebase.BOARD_USER_COUNT).getValue(Integer.class);
+									Timber.d("boardUserCount = " + boardUserCount);
+									GamePlayActivity.startGamePlayActivity(MapActivity.this, gameId, boardUserCount, dataSnapshot.getKey());
+								}
 							}
+						} else {
+							Toast.makeText(MapActivity.this, "Invalid game id", Toast.LENGTH_SHORT).show();
 						}
+					}
 
-						@Override
-						public void onCancelled(@NonNull DatabaseError databaseError) {
-							Toast.makeText(MapActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-						}
-					});
-		}
-
+					@Override
+					public void onCancelled(@NonNull DatabaseError databaseError) {
+						Toast.makeText(MapActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+					}
+				});
 	}
 }

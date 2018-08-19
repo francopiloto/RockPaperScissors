@@ -16,7 +16,7 @@ import com.google.android.gms.location.LocationServices;
 // please do not change the formatting in this class
 public class TrackingService
 {
-    private static final int REFRESH_INTERVAL_MS = 5000;
+    private static final int REFRESH_INTERVAL_MS = 2000;
 
 	private Activity activity;
 	private TrackingListener listener;
